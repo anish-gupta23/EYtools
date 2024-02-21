@@ -8,7 +8,8 @@ def create_pivot_table(input_file, rows, values):
     
     pivot_table = pd.pivot_table(df, 
                                   values=values, 
-                                  index=rows)
+                                  index=rows,
+                                  aggfunc='sum')
     
     return pivot_table
 
@@ -108,4 +109,3 @@ output_text.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 output_text.config(state=tk.DISABLED)
 
 root.mainloop()
-
