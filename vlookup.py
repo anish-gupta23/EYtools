@@ -9,6 +9,9 @@ def merge_and_vlookup(file1, file2, output_file1, output_file2):
         df1 = pd.read_excel(file1, parse_dates=['DocumentDate'], date_format='%Y-%m-%d')
         df2 = pd.read_excel(file2, parse_dates=['DocumentDate'], date_format='%Y-%m-%d')
 
+        df1['DocumentNumber'] = df1['DocumentNumber'].str.upper()
+        df2['DocumentNumber'] = df2['DocumentNumber'].str.upper()
+
         df1['KEY'] = df1['SupplierGSTIN'].astype(str) + df1['DocumentType'].astype(str) + df1['DocumentNumber'].astype(str)
         df2['KEY'] = df2['SupplierGSTIN'].astype(str) + df2['DocumentType'].astype(str) + df2['DocumentNumber'].astype(str)
 
@@ -164,13 +167,13 @@ def merge_and_vlookup(file1, file2, output_file1, output_file2):
         merged_df1.to_excel(output_file1, index=False)
         merged_df2.to_excel(output_file2, index=False)
 
-        report_type_counts_1 = merged_df1['Report Type'].value_counts()
-        report_counts_df_1 = pd.DataFrame(report_type_counts_1.items(), columns=['Report Type', 'Count'])
+        report_type_counts_1 = merged_df1['mismatched_reason'].value_counts()
+        report_counts_df_1 = pd.DataFrame(report_type_counts_1.items(), columns=['mismatched_reason', 'Count'])
 
-        report_type_counts_2 = merged_df2['Report Type'].value_counts()
-        report_counts_df_2 = pd.DataFrame(report_type_counts_2.items(), columns=['Report Type', 'Count'])
+        report_type_counts_2 = merged_df2['mismatched_reason'].value_counts()
+        report_counts_df_2 = pd.DataFrame(report_type_counts_2.items(), columns=['mismatched_reason', 'Count'])
 
-        sum_values_df1 = merged_df1.groupby('Report Type').agg({
+        sum_values_df1 = merged_df1.groupby('mismatched_reason').agg({
             'TaxableValue_F1': 'sum',
             'IntegratedTaxAmount_F1': 'sum',
             'CentralTaxAmount_F1': 'sum',
@@ -178,7 +181,7 @@ def merge_and_vlookup(file1, file2, output_file1, output_file2):
         }).reset_index()
 
         # Calculate sum of values before lookup for each mismatch type in sheet 2
-        sum_values_df2 = merged_df2.groupby('Report Type').agg({
+        sum_values_df2 = merged_df2.groupby('mismatched_reason').agg({
             'TaxableValue_F2': 'sum',
             'IntegratedTaxAmount_F2': 'sum',
             'CentralTaxAmount_F2': 'sum',
@@ -186,10 +189,10 @@ def merge_and_vlookup(file1, file2, output_file1, output_file2):
         }).reset_index()
 
         # Merge count data with sum values for sheet 1
-        report_counts_df_1 = pd.merge(report_counts_df_1, sum_values_df1, on='Report Type', how='left')
+        report_counts_df_1 = pd.merge(report_counts_df_1, sum_values_df1, on='mismatched_reason', how='left')
 
         # Merge count data with sum values for sheet 2
-        report_counts_df_2 = pd.merge(report_counts_df_2, sum_values_df2, on='Report Type', how='left')
+        report_counts_df_2 = pd.merge(report_counts_df_2, sum_values_df2, on='mismatched_reason', how='left')
 
         with pd.ExcelWriter(output_file1, mode='a', engine='openpyxl') as writer1:
             report_counts_df_1.to_excel(writer1, sheet_name='Report_Counts_1', index=False, startcol=2)
@@ -234,3 +237,4 @@ button = tk.Button(root, text="Browse Excel Files", command=browse_files)
 button.pack(pady=20)
 
 root.mainloop()
+
